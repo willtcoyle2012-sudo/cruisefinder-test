@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CruiseFinder Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 100px;
+      background: #f4f6f8;
+    }
+
+    button {
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: none;
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1e40af;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>CruiseFinder Test</h1>
+  <p>Who's setting sail?</p>
+
+  <select id="type">
+    <option value="romantic">Couples</option>
+    <option value="family">Families</option>
+    <option value="seniors">Seniors</option>
+  </select>
+
+  <br><br>
+  <button onclick="findShip()">Find My Cruise</button>
+
+  <h2 id="result"></h2>
+
+  <script>
+    function findShip() {
+      const type = document.getElementById("type").value;
+      let ship = "";
+
+      if (type === "romantic") ship = "Oceania Vista";
+      if (type === "family") ship = "Wonder of the Seas";
+      if (type === "seniors") ship = "Princess Enchanted Princess";
+
+      document.getElementById("result").innerText = "Recommended Ship: " + ship;
+    }
+  </script>
+
+</body>
+</html>
