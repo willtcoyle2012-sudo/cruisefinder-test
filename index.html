@@ -1,58 +1,102 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>CruiseFinder Test</title>
+  <title>CruiseFinder</title>
   <style>
     body {
       font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .card {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      width: 400px;
       text-align: center;
-      margin-top: 100px;
-      background: #f4f6f8;
+    }
+
+    h2 {
+      margin-bottom: 20px;
     }
 
     button {
-      padding: 12px 20px;
-      font-size: 16px;
-      border-radius: 8px;
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
       border: none;
+      border-radius: 10px;
       background: #2563eb;
       color: white;
+      font-size: 16px;
       cursor: pointer;
     }
 
     button:hover {
       background: #1e40af;
     }
+
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
 
-  <h1>CruiseFinder Test</h1>
-  <p>Who's setting sail?</p>
+<div class="card">
 
-  <select id="type">
-    <option value="romantic">Couples</option>
-    <option value="family">Families</option>
-    <option value="seniors">Seniors</option>
-  </select>
+  <div id="step1">
+    <h2>Who's sailing?</h2>
+    <button onclick="nextStep('family')">Families</button>
+    <button onclick="nextStep('couples')">Couples</button>
+    <button onclick="nextStep('seniors')">Seniors</button>
+  </div>
 
-  <br><br>
-  <button onclick="findShip()">Find My Cruise</button>
+  <div id="step2" class="hidden">
+    <h2>What's your vibe?</h2>
+    <button onclick="finish('fun')">Fun & Adventure</button>
+    <button onclick="finish('relax')">Relaxation</button>
+  </div>
 
-  <h2 id="result"></h2>
+  <div id="result" class="hidden">
+    <h2 id="finalResult"></h2>
+    <button onclick="restart()">Start Again</button>
+  </div>
 
-  <script>
-    function findShip() {
-      const type = document.getElementById("type").value;
-      let ship = "";
+</div>
 
-      if (type === "romantic") ship = "Oceania Vista";
-      if (type === "family") ship = "Wonder of the Seas";
-      if (type === "seniors") ship = "Princess Enchanted Princess";
+<script>
+  let type = "";
 
-      document.getElementById("result").innerText = "Recommended Ship: " + ship;
-    }
-  </script>
+  function nextStep(choice) {
+    type = choice;
+    document.getElementById("step1").classList.add("hidden");
+    document.getElementById("step2").classList.remove("hidden");
+  }
+
+  function finish(vibe) {
+    let ship = "";
+
+    if(type === "family" && vibe === "fun") ship = "Wonder of the Seas";
+    else if(type === "couples" && vibe === "relax") ship = "Oceania Vista";
+    else if(type === "seniors") ship = "Princess Enchanted Princess";
+    else ship = "Celebrity Edge";
+
+    document.getElementById("step2").classList.add("hidden");
+    document.getElementById("result").classList.remove("hidden");
+    document.getElementById("finalResult").innerText = "Recommended Ship: " + ship;
+  }
+
+  function restart() {
+    location.reload();
+  }
+</script>
 
 </body>
 </html>
