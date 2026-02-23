@@ -1,101 +1,137 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>CruiseFinder</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cruise Finder Test</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f3f4f6;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-
-    .card {
-      background: white;
-      padding: 40px;
-      border-radius: 16px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-      width: 400px;
-      text-align: center;
-    }
-
-    h2 {
-      margin-bottom: 20px;
-    }
-
-    button {
-      width: 100%;
-      padding: 12px;
-      margin: 8px 0;
-      border: none;
-      border-radius: 10px;
-      background: #2563eb;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #1e40af;
-    }
-
-    .hidden {
-      display: none;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; background:#f5f5f5; color:#333; }
+    h1, h2 { text-align: center; }
+    .question { margin-bottom: 15px; }
+    label { margin-right: 10px; }
+    button { padding: 10px 20px; margin-top: 20px; cursor: pointer; }
+    #results-list { margin-top: 20px; list-style: none; padding: 0; }
+    #results-list li { background: #fff; margin-bottom: 10px; padding: 10px; border-radius: 5px; }
   </style>
 </head>
 <body>
 
-<div class="card">
+<h1>Cruise Finder Test</h1>
 
-  <div id="step1">
-    <h2>Who's sailing?</h2>
-    <button onclick="nextStep('family')">Families</button>
-    <button onclick="nextStep('couples')">Couples</button>
-    <button onclick="nextStep('seniors')">Seniors</button>
+<form id="quiz-form">
+
+  <div class="question">
+    <p>1. Who's setting sail?</p>
+    <label><input type="radio" name="who" value="solo"> Solo explorer</label>
+    <label><input type="radio" name="who" value="couple"> Couple</label>
+    <label><input type="radio" name="who" value="family"> Family</label>
+    <label><input type="radio" name="who" value="friends"> Friends</label>
+    <label><input type="radio" name="who" value="older"> Older adults</label>
   </div>
 
-  <div id="step2" class="hidden">
-    <h2>What's your vibe?</h2>
-    <button onclick="finish('fun')">Fun & Adventure</button>
-    <button onclick="finish('relax')">Relaxation</button>
+  <div class="question">
+    <p>2. What's your vibe?</p>
+    <label><input type="radio" name="vibe" value="adventure"> Adventure</label>
+    <label><input type="radio" name="vibe" value="cultural"> Cultural</label>
+    <label><input type="radio" name="vibe" value="family"> Family fun</label>
+    <label><input type="radio" name="vibe" value="relax"> Relaxation</label>
+    <label><input type="radio" name="vibe" value="party"> Party & Nightlife</label>
+    <label><input type="radio" name="vibe" value="romantic"> Romantic</label>
   </div>
 
-  <div id="result" class="hidden">
-    <h2 id="finalResult"></h2>
-    <button onclick="restart()">Start Again</button>
+  <div class="question">
+    <p>3. Budget comfort zone (per night)?</p>
+    <label><input type="radio" name="budget" value="under100"> Under €100</label>
+    <label><input type="radio" name="budget" value="100-250"> €100 - €250</label>
+    <label><input type="radio" name="budget" value="250-400"> €250 - €400</label>
+    <label><input type="radio" name="budget" value="400plus"> €400+</label>
   </div>
 
+  <div class="question">
+    <p>4. Dream destination?</p>
+    <label><input type="radio" name="dest" value="caribbean"> Caribbean</label>
+    <label><input type="radio" name="dest" value="northern"> Northern Europe</label>
+    <label><input type="radio" name="dest" value="med"> Mediterranean</label>
+    <label><input type="radio" name="dest" value="southpac"> South Pacific</label>
+    <label><input type="radio" name="dest" value="asia"> Asia</label>
+    <label><input type="radio" name="dest" value="alaska"> Alaska</label>
+  </div>
+
+  <div class="question">
+    <p>5. Preferred ship size?</p>
+    <label><input type="radio" name="size" value="small"> Under 500 passengers</label>
+    <label><input type="radio" name="size" value="med"> 500 - 2000 passengers</label>
+    <label><input type="radio" name="size" value="large"> 2000 - 4000 passengers</label>
+    <label><input type="radio" name="size" value="mega"> 4000+ passengers</label>
+  </div>
+
+  <div class="question">
+    <p>6. Most important on board?</p>
+    <label><input type="radio" name="feature" value="dining"> Fine dining</label>
+    <label><input type="radio" name="feature" value="spa"> Spa & Wellness</label>
+    <label><input type="radio" name="feature" value="pools"> Pools & Water Fun</label>
+    <label><input type="radio" name="feature" value="shows"> Shows & Theater</label>
+    <label><input type="radio" name="feature" value="kids"> Kids Club</label>
+  </div>
+
+  <button type="submit">Find My Cruise!</button>
+</form>
+
+<div id="quiz-results">
+  <h2>Your Best Cruise Matches:</h2>
+  <ul id="results-list"></ul>
 </div>
 
 <script>
-  let type = "";
+  // Map quiz answers to numeric scores
+  const mapAnswers = {
+    who: { solo:5, couple:8, family:10, friends:7, older:6 },
+    vibe: { adventure:8, cultural:7, family:10, relax:9, party:6, romantic:8 },
+    budget: { under100:4, "100-250":6, "250-400":8, "400plus":10 },
+    dest: { caribbean:7, northern:8, med:8, southpac:9, asia:8, alaska:7 },
+    size: { small:5, med:6, large:8, mega:10 },
+    feature: { dining:9, spa:8, pools:7, shows:6, kids:10 }
+  };
 
-  function nextStep(choice) {
-    type = choice;
-    document.getElementById("step1").classList.add("hidden");
-    document.getElementById("step2").classList.remove("hidden");
+  async function loadShips() {
+    const response = await fetch('ships.json'); // your JSON file
+    const ships = await response.json();
+    return ships;
   }
 
-  function finish(vibe) {
-    let ship = "";
-
-    if(type === "family" && vibe === "fun") ship = "Wonder of the Seas";
-    else if(type === "couples" && vibe === "relax") ship = "Oceania Vista";
-    else if(type === "seniors") ship = "Princess Enchanted Princess";
-    else ship = "Celebrity Edge";
-
-    document.getElementById("step2").classList.add("hidden");
-    document.getElementById("result").classList.remove("hidden");
-    document.getElementById("finalResult").innerText = "Recommended Ship: " + ship;
+  function calculateMatches(ships, answers) {
+    return ships.map(ship => {
+      let score = 0;
+      for (let key in answers) {
+        if(ship[key] !== undefined) {
+          score += 10 - Math.abs(ship[key] - answers[key]);
+        }
+      }
+      return { name: ship.name, score };
+    }).sort((a,b) => b.score - a.score);
   }
 
-  function restart() {
-    location.reload();
+  function displayMatches(matches) {
+    const list = document.getElementById('results-list');
+    list.innerHTML = '';
+    matches.slice(0,5).forEach(ship => {
+      const li = document.createElement('li');
+      li.textContent = `${ship.name} — Match Score: ${ship.score}`;
+      list.appendChild(li);
+    });
   }
+
+  document.getElementById('quiz-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const answers = {};
+    for (let [key, value] of formData.entries()) {
+      answers[key] = mapAnswers[key][value];
+    }
+    const ships = await loadShips();
+    const matches = calculateMatches(ships, answers);
+    displayMatches(matches);
+  });
 </script>
 
 </body>
