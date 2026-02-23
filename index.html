@@ -5,12 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cruise Finder Test</title>
 <style>
-  body { font-family: Arial, sans-serif; background:#f0f2f5; margin: 0; padding: 20px;}
-  h1 { text-align: center; }
-  .question { margin-bottom: 20px; }
-  .question label { display: block; margin: 5px 0; }
-  .results { margin-top: 30px; }
-  .ship { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);}
+body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:20px;}
+h1 { text-align:center; }
+.question { margin-bottom:20px; }
+.question label { display:block; margin:5px 0; }
+.results { margin-top:30px; }
+.ship { background:white; padding:15px; margin-bottom:10px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1);}
+button { display:block; margin:20px auto; padding:10px 20px; font-size:16px; cursor:pointer; }
 </style>
 </head>
 <body>
@@ -18,9 +19,7 @@
 <h1>Cruise Finder Test</h1>
 
 <div id="quiz"></div>
-
 <button onclick="calculateResults()">See Your Top Matches</button>
-
 <div class="results" id="results"></div>
 
 <script>
@@ -34,7 +33,7 @@ const questions = [
   { text: "What matters most on board?", key: ["Fine Dining", "Spa & Wellness", "Pools & Water Fun", "Shows & Theater", "Kids Club"], multi: true }
 ];
 
-// ======= SHIPS JSON =======
+// ======= SHIPS =======
 const ships = [
   { name:"Oceania Vista", scores: {"Solo":0,"Couples":1,"Family":0.5,"Friends":0.5,"Older Adults":1,"Adventure":0.5,"Cultural":1,"Family Fun":0.5,"Relaxation":1,"Party":0,"Romantic":1,"Luxury":1,"Modern":0.5,"Dining":1,"Size":0.5} },
   { name:"Cunard Queen Anne", scores: {"Solo":0,"Couples":1,"Family":0.5,"Friends":0,"Older Adults":1,"Adventure":0,"Cultural":1,"Family Fun":0,"Relaxation":1,"Party":0,"Romantic":1,"Luxury":0.9,"Modern":0,"Dining":1,"Size":0.5} },
@@ -52,28 +51,25 @@ const ships = [
 // ======= GENERATE QUIZ =======
 const quizDiv = document.getElementById("quiz");
 
-questions.forEach((q, i) => {
+questions.forEach((q,i) => {
   const div = document.createElement("div");
   div.className = "question";
   div.innerHTML = `<h3>${q.text}</h3>`;
-  
-  q.key.forEach(option => {
-    const id = `q${i}-${option.replace(/\s+/g,"")}`;
+  q.key.forEach(opt => {
+    const id = `q${i}-${opt.replace(/\s+/g,"")}`;
     div.innerHTML += `
       <label>
-        <input type="${q.multi ? "checkbox":"radio"}" name="q${i}" value="${option}" id="${id}">
-        ${option}
+        <input type="${q.multi ? 'checkbox':'radio'}" name="q${i}" value="${opt}" id="${id}">
+        ${opt}
       </label>`;
   });
-  
   quizDiv.appendChild(div);
 });
 
 // ======= CALCULATE RESULTS =======
 function calculateResults() {
   const userAnswers = {};
-
-  questions.forEach((q, i) => {
+  questions.forEach((q,i) => {
     const selected = [];
     document.getElementsByName(`q${i}`).forEach(input => {
       if(input.checked) selected.push(input.value);
@@ -91,11 +87,11 @@ function calculateResults() {
     return { name: ship.name, score: total };
   });
 
-  results.sort((a,b) => b.score - a.score);
+  results.sort((a,b)=>b.score-a.score);
 
   const resultsDiv = document.getElementById("results");
   resultsDiv.innerHTML = "<h2>Top Cruise Matches:</h2>";
-  results.slice(0,5).forEach(r => {
+  results.slice(0,5).forEach(r=>{
     resultsDiv.innerHTML += `<div class="ship"><strong>${r.name}</strong> — Score: ${r.score.toFixed(2)}</div>`;
   });
 }
