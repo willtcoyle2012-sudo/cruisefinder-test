@@ -59,27 +59,17 @@
     function convertOldScores(ship) {
       const baseline = 60;
       let softPoints = 0;
-
       const s = ship.scores || {};
 
-      // Audience preference
       const audienceKeys = ["Family","Couples","Solo","Friends","Older Adults"];
       const audienceFraction = audienceKeys.reduce((sum, key) => sum + (s[key] || 0), 0) / audienceKeys.length;
       softPoints += audienceFraction * 10;
 
-      // Luxury / Market
       softPoints += (s["Luxury"] || 0) * 6;
-
-      // Modern
       softPoints += (s["Modern"] || 0) * 6;
-
-      // Dining
       softPoints += (s["Dining"] || 0) * 6;
-
-      // Size
       softPoints += (s["Size"] || 0) * 6;
 
-      // Extras
       const extraKeys = ["Adventure","Cultural","Relaxation","Party","Romantic","Family Fun"];
       const extraFraction = extraKeys.reduce((sum, key) => sum + (s[key] || 0), 0) / extraKeys.length;
       softPoints += extraFraction * 6;
@@ -87,57 +77,46 @@
       return { ...ship, finalScore: Math.min(baseline + softPoints, 100) };
     }
 
-    // Hard exclusion based on quiz answers
- function hardExclude(ship, user) {
-  // Audience filter
-  if (user.audience === "Family" && (ship.scores.Family || 0) < 0.3) return true;
-  if (user.audience === "Adult" && (ship.scores.Couples || 0) < 0.3 && (ship.scores.Older Adults || 0) < 0.3) return true;
+    // Hard exclusion based on quiz
+    function hardExclude(ship, user) {
+      // Audience
+      if (user.audience === "Family" && (ship.scores.Family || 0) < 0.3) return true;
+      if (user.audience === "Adult" && (ship.scores.Couples || 0) < 0.3 && (ship.scores.Older Adults || 0) < 0.3) return true;
 
-  // Budget filter
-  if (user.budget === "low" && (ship.scores.Luxury || 0) > 0.8) return true;
-  if (user.budget === "mid" && (ship.scores.Luxury || 0) > 0.95) return true;
+      // Budget
+      if (user.budget === "low" && (ship.scores.Luxury || 0) > 0.8) return true;
+      if (user.budget === "mid" && (ship.scores.Luxury || 0) > 0.95) return true;
 
-  // Region filter
-  if (!ship.deployment || !ship.deployment.includes(user.region)) return true;
+      // Region
+      if (!ship.deployment || !ship.deployment.includes(user.region)) return true;
 
-  return false;
-}
+      return false;
+    }
 
-    // Display results in table
     function displayResults(ships) {
       const tbody = document.querySelector("#results-table tbody");
       tbody.innerHTML = "";
-
       if (ships.length === 0) {
         tbody.innerHTML = "<tr><td colspan='2'>No ships match your criteria.</td></tr>";
         return;
       }
-
       ships.forEach(ship => {
         const tr = document.createElement("tr");
-        const nameTd = document.createElement("td");
-        const scoreTd = document.createElement("td");
-
-        nameTd.textContent = ship.name;
-        scoreTd.textContent = ship.finalScore.toFixed(0);
-
-        tr.appendChild(nameTd);
-        tr.appendChild(scoreTd);
+        tr.innerHTML = `<td>${ship.name}</td><td>${ship.finalScore.toFixed(0)}</td>`;
         tbody.appendChild(tr);
       });
     }
 
-    // Main function to filter, score, and sort
     function findShips(data, user) {
       const results = data
         .filter(ship => !hardExclude(ship, user))
         .map(convertOldScores)
-        .sort((a, b) => b.finalScore - a.finalScore);
+        .sort((a,b) => b.finalScore - a.finalScore);
 
       displayResults(results);
     }
 
-    // Load JSON and hook up quiz
+    // Load ships.json and attach button
     fetch("ships.json")
       .then(res => res.json())
       .then(data => {
@@ -150,7 +129,11 @@
           findShips(data, user);
         });
       })
-      .catch(err => console.error("Error loading ships.json:", err));
+      .catch(err => {
+        console.error("Error loading ships.json:", err);
+        const tbody = document.querySelector("#results-table tbody");
+        tbody.innerHTML = "<tr><td colspan='2'>Failed to load ships.json</td></tr>";
+      });
   </script>
 </body>
 </html>
