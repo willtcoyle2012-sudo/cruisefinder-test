@@ -88,15 +88,20 @@
     }
 
     // Hard exclusion based on quiz answers
-    function hardExclude(ship, user) {
-      // Example: audience mismatch
-      if (user.audience === "Family" && ship.scores && (ship.scores.Adult || 0) > 0.7) return true;
-      // Budget check (approximate)
-      if (user.budget === "low" && ship.scores && (ship.scores.Luxury || 0) > 0.8) return true;
-      // Region check
-      if (!ship.deployment || !ship.deployment.includes(user.region)) return true;
-      return false;
-    }
+ function hardExclude(ship, user) {
+  // Audience filter
+  if (user.audience === "Family" && (ship.scores.Family || 0) < 0.3) return true;
+  if (user.audience === "Adult" && (ship.scores.Couples || 0) < 0.3 && (ship.scores.Older Adults || 0) < 0.3) return true;
+
+  // Budget filter
+  if (user.budget === "low" && (ship.scores.Luxury || 0) > 0.8) return true;
+  if (user.budget === "mid" && (ship.scores.Luxury || 0) > 0.95) return true;
+
+  // Region filter
+  if (!ship.deployment || !ship.deployment.includes(user.region)) return true;
+
+  return false;
+}
 
     // Display results in table
     function displayResults(ships) {
