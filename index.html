@@ -2,16 +2,48 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Cruise Finder</title>
+  <title>Cruise Finder Quiz</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 20px; }
+    label { display: block; margin-top: 10px; }
+    select { margin-left: 10px; }
+    button { margin-top: 15px; padding: 8px 15px; }
     table { border-collapse: collapse; width: 100%; margin-top: 20px; }
     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
     th { background-color: #f4f4f4; }
   </style>
 </head>
 <body>
-  <h1>Cruise Finder Results</h1>
+  <h1>Cruise Finder Quiz</h1>
+
+  <div id="quiz">
+    <label>Audience:
+      <select id="audience">
+        <option value="Family">Family</option>
+        <option value="Adult">Adult</option>
+        <option value="Mixed">Mixed</option>
+      </select>
+    </label>
+
+    <label>Budget:
+      <select id="budget">
+        <option value="low">Low</option>
+        <option value="mid">Mid</option>
+        <option value="high">High</option>
+      </select>
+    </label>
+
+    <label>Region:
+      <select id="region">
+        <option value="Caribbean">Caribbean</option>
+        <option value="Mediterranean">Mediterranean</option>
+        <option value="Europe">Europe</option>
+      </select>
+    </label>
+
+    <button id="findShips">Find Ships</button>
+  </div>
+
   <table id="results-table">
     <thead>
       <tr>
@@ -22,18 +54,18 @@
     <tbody></tbody>
   </table>
 
-  <script type="module">
-    // Conversion & sorting functions
+  <script>
+    // Convert old fractional scores to 60–100
     function convertOldScores(ship) {
       const baseline = 60;
       let softPoints = 0;
 
-      const s = ship.scores;
+      const s = ship.scores || {};
 
       // Audience preference
       const audienceKeys = ["Family","Couples","Solo","Friends","Older Adults"];
       const audienceFraction = audienceKeys.reduce((sum, key) => sum + (s[key] || 0), 0) / audienceKeys.length;
-      softPoints += audienceFraction * 10; // max 10
+      softPoints += audienceFraction * 10;
 
       // Luxury / Market
       softPoints += (s["Luxury"] || 0) * 6;
@@ -50,38 +82,67 @@
       // Extras
       const extraKeys = ["Adventure","Cultural","Relaxation","Party","Romantic","Family Fun"];
       const extraFraction = extraKeys.reduce((sum, key) => sum + (s[key] || 0), 0) / extraKeys.length;
-      softPoints += extraFraction * 6; // max 6
+      softPoints += extraFraction * 6;
 
-      const finalScore = Math.min(baseline + softPoints, 100);
-
-      return { ...ship, finalScore };
+      return { ...ship, finalScore: Math.min(baseline + softPoints, 100) };
     }
 
-    function getSortedShips(oldShipsJson) {
-      return oldShipsJson
+    // Hard exclusion based on quiz answers
+    function hardExclude(ship, user) {
+      // Example: audience mismatch
+      if (user.audience === "Family" && ship.scores && (ship.scores.Adult || 0) > 0.7) return true;
+      // Budget check (approximate)
+      if (user.budget === "low" && ship.scores && (ship.scores.Luxury || 0) > 0.8) return true;
+      // Region check
+      if (!ship.deployment || !ship.deployment.includes(user.region)) return true;
+      return false;
+    }
+
+    // Display results in table
+    function displayResults(ships) {
+      const tbody = document.querySelector("#results-table tbody");
+      tbody.innerHTML = "";
+
+      if (ships.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='2'>No ships match your criteria.</td></tr>";
+        return;
+      }
+
+      ships.forEach(ship => {
+        const tr = document.createElement("tr");
+        const nameTd = document.createElement("td");
+        const scoreTd = document.createElement("td");
+
+        nameTd.textContent = ship.name;
+        scoreTd.textContent = ship.finalScore.toFixed(0);
+
+        tr.appendChild(nameTd);
+        tr.appendChild(scoreTd);
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Main function to filter, score, and sort
+    function findShips(data, user) {
+      const results = data
+        .filter(ship => !hardExclude(ship, user))
         .map(convertOldScores)
         .sort((a, b) => b.finalScore - a.finalScore);
+
+      displayResults(results);
     }
 
-    // Load ships.json and display results
+    // Load JSON and hook up quiz
     fetch("ships.json")
       .then(res => res.json())
       .then(data => {
-        const results = getSortedShips(data);
-        const tbody = document.querySelector("#results-table tbody");
-        tbody.innerHTML = "";
-
-        results.forEach(ship => {
-          const tr = document.createElement("tr");
-          const nameTd = document.createElement("td");
-          const scoreTd = document.createElement("td");
-
-          nameTd.textContent = ship.name;
-          scoreTd.textContent = ship.finalScore.toFixed(0); // show as whole number
-
-          tr.appendChild(nameTd);
-          tr.appendChild(scoreTd);
-          tbody.appendChild(tr);
+        document.getElementById("findShips").addEventListener("click", () => {
+          const user = {
+            audience: document.getElementById("audience").value,
+            budget: document.getElementById("budget").value,
+            region: document.getElementById("region").value
+          };
+          findShips(data, user);
         });
       })
       .catch(err => console.error("Error loading ships.json:", err));
