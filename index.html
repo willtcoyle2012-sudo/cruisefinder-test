@@ -1,139 +1,122 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Cruise Finder Quiz</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    label { display: block; margin-top: 10px; }
-    select { margin-left: 10px; }
-    button { margin-top: 15px; padding: 8px 15px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background-color: #f4f4f4; }
-  </style>
-</head>
 <body>
-  <h1>Cruise Finder Quiz</h1>
+  <!-- Quiz form -->
+  <label>Audience:
+    <select id="audience">
+      <option value="Family">Family</option>
+      <option value="Adult">Adult</option>
+      <option value="Mixed">Mixed</option>
+    </select>
+  </label>
 
-  <div id="quiz">
-    <label>Audience:
-      <select id="audience">
-        <option value="Family">Family</option>
-        <option value="Adult">Adult</option>
-        <option value="Mixed">Mixed</option>
-      </select>
-    </label>
+  <label>Budget:
+    <select id="budget">
+      <option value="low">Low</option>
+      <option value="mid">Mid</option>
+      <option value="high">High</option>
+    </select>
+  </label>
 
-    <label>Budget:
-      <select id="budget">
-        <option value="low">Low</option>
-        <option value="mid">Mid</option>
-        <option value="high">High</option>
-      </select>
-    </label>
+  <label>Region:
+    <select id="region">
+      <option value="Caribbean">Caribbean</option>
+      <option value="Mediterranean">Mediterranean</option>
+      <option value="Europe">Europe</option>
+    </select>
+  </label>
 
-    <label>Region:
-      <select id="region">
-        <option value="Caribbean">Caribbean</option>
-        <option value="Mediterranean">Mediterranean</option>
-        <option value="Europe">Europe</option>
-      </select>
-    </label>
-
-    <button id="findShips">Find Ships</button>
-  </div>
+  <button id="findShips">Find Ships</button>
 
   <table id="results-table">
     <thead>
-      <tr>
-        <th>Ship Name</th>
-        <th>Score</th>
-      </tr>
+      <tr><th>Ship Name</th><th>Score</th></tr>
     </thead>
     <tbody></tbody>
   </table>
 
+  <!-- Script must be last, just before </body> -->
   <script>
-    // Convert old fractional scores to 60–100
+    // Embedding ships directly to avoid fetch issues
+    const data = [
+      {
+        "name": "Carnival Sunshine",
+        "scores": {"Family":1,"Luxury":0.2,"Modern":1,"Dining":1,"Size":1},
+        "deployment":["Caribbean","Bahamas"]
+      },
+      {
+        "name": "MSC Meraviglia",
+        "scores": {"Family":0.8,"Luxury":0.5,"Modern":1,"Dining":1,"Size":1},
+        "deployment":["Caribbean","Europe"]
+      },
+      {
+        "name": "Cunard Queen Anne",
+        "scores": {"Family":0.5,"Luxury":0.9,"Modern":0,"Dining":1,"Size":0.5},
+        "deployment":["Mediterranean","Europe"]
+      },
+      {
+        "name": "Royal Caribbean Odyssey",
+        "scores": {"Family":0.9,"Luxury":0.4,"Modern":1,"Dining":1,"Size":1},
+        "deployment":["Caribbean","Europe"]
+      },
+      {
+        "name": "Celebrity Constellation",
+        "scores": {"Family":0.5,"Luxury":0.7,"Modern":1,"Dining":1,"Size":0.5},
+        "deployment":["Caribbean","Mediterranean"]
+      }
+    ];
+
+    // Convert scores to 60–100
     function convertOldScores(ship) {
       const baseline = 60;
-      let softPoints = 0;
-      const s = ship.scores || {};
-
-      const audienceKeys = ["Family","Couples","Solo","Friends","Older Adults"];
-      const audienceFraction = audienceKeys.reduce((sum, key) => sum + (s[key] || 0), 0) / audienceKeys.length;
-      softPoints += audienceFraction * 10;
-
-      softPoints += (s["Luxury"] || 0) * 6;
-      softPoints += (s["Modern"] || 0) * 6;
-      softPoints += (s["Dining"] || 0) * 6;
-      softPoints += (s["Size"] || 0) * 6;
-
-      const extraKeys = ["Adventure","Cultural","Relaxation","Party","Romantic","Family Fun"];
-      const extraFraction = extraKeys.reduce((sum, key) => sum + (s[key] || 0), 0) / extraKeys.length;
-      softPoints += extraFraction * 6;
-
-      return { ...ship, finalScore: Math.min(baseline + softPoints, 100) };
+      const s = ship.scores;
+      const audience = ["Family","Couples","Solo","Friends","Older Adults"];
+      let soft = audience.reduce((sum,key)=>sum+(s[key]||0),0)/audience.length*10;
+      soft += (s["Luxury"]||0)*6 + (s["Modern"]||0)*6 + (s["Dining"]||0)*6 + (s["Size"]||0)*6;
+      const extra = ["Adventure","Cultural","Relaxation","Party","Romantic","Family Fun"];
+      soft += extra.reduce((sum,key)=>sum+(s[key]||0),0)/extra.length*6;
+      return {...ship, finalScore: Math.min(baseline+soft,100)};
     }
 
-    // Hard exclusion based on quiz
-    function hardExclude(ship, user) {
-      // Audience
-      if (user.audience === "Family" && (ship.scores.Family || 0) < 0.3) return true;
-      if (user.audience === "Adult" && (ship.scores.Couples || 0) < 0.3 && (ship.scores.Older Adults || 0) < 0.3) return true;
-
-      // Budget
-      if (user.budget === "low" && (ship.scores.Luxury || 0) > 0.8) return true;
-      if (user.budget === "mid" && (ship.scores.Luxury || 0) > 0.95) return true;
-
-      // Region
-      if (!ship.deployment || !ship.deployment.includes(user.region)) return true;
-
+    // Hard exclude logic
+    function hardExclude(ship, user){
+      if(user.audience==="Family" && (ship.scores.Family||0)<0.3) return true;
+      if(user.audience==="Adult" && (ship.scores.Couples||0)<0.3 && (ship.scores["Older Adults"]||0)<0.3) return true;
+      if(user.budget==="low" && (ship.scores.Luxury||0)>0.8) return true;
+      if(user.budget==="mid" && (ship.scores.Luxury||0)>0.95) return true;
+      if(!ship.deployment.includes(user.region)) return true;
       return false;
     }
 
-    function displayResults(ships) {
+    function displayResults(ships){
       const tbody = document.querySelector("#results-table tbody");
       tbody.innerHTML = "";
-      if (ships.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='2'>No ships match your criteria.</td></tr>";
+      if(ships.length===0){
+        tbody.innerHTML="<tr><td colspan='2'>No ships match your criteria.</td></tr>";
         return;
       }
-      ships.forEach(ship => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${ship.name}</td><td>${ship.finalScore.toFixed(0)}</td>`;
+      ships.forEach(ship=>{
+        const tr=document.createElement("tr");
+        tr.innerHTML=`<td>${ship.name}</td><td>${ship.finalScore.toFixed(0)}</td>`;
         tbody.appendChild(tr);
       });
     }
 
-    function findShips(data, user) {
-      const results = data
-        .filter(ship => !hardExclude(ship, user))
-        .map(convertOldScores)
-        .sort((a,b) => b.finalScore - a.finalScore);
-
+    function findShips(data,user){
+      const results = data.filter(ship=>!hardExclude(ship,user))
+                          .map(convertOldScores)
+                          .sort((a,b)=>b.finalScore-a.finalScore);
       displayResults(results);
     }
 
-    // Load ships.json and attach button
-    fetch("ships.json")
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById("findShips").addEventListener("click", () => {
-          const user = {
-            audience: document.getElementById("audience").value,
-            budget: document.getElementById("budget").value,
-            region: document.getElementById("region").value
-          };
-          findShips(data, user);
-        });
-      })
-      .catch(err => {
-        console.error("Error loading ships.json:", err);
-        const tbody = document.querySelector("#results-table tbody");
-        tbody.innerHTML = "<tr><td colspan='2'>Failed to load ships.json</td></tr>";
-      });
+    // Attach button listener
+    document.getElementById("findShips").addEventListener("click",()=>{
+      console.log("Button clicked!"); // Debug
+      const user = {
+        audience: document.getElementById("audience").value,
+        budget: document.getElementById("budget").value,
+        region: document.getElementById("region").value
+      };
+      console.log("User selection:", user);
+      findShips(data,user);
+    });
   </script>
 </body>
-</html>
