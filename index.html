@@ -1,101 +1,90 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cruise Finder Test</title>
-<style>
-body { font-family: Arial, sans-serif; background:#f0f2f5; margin:0; padding:20px;}
-h1 { text-align:center; }
-.question { margin-bottom:20px; }
-.question label { display:block; margin:5px 0; }
-.results { margin-top:30px; }
-.ship { background:white; padding:15px; margin-bottom:10px; border-radius:8px; box-shadow:0 2px 5px rgba(0,0,0,0.1);}
-button { display:block; margin:20px auto; padding:10px 20px; font-size:16px; cursor:pointer; }
-</style>
+  <meta charset="UTF-8">
+  <title>Cruise Finder</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f4f4f4; }
+  </style>
 </head>
 <body>
+  <h1>Cruise Finder Results</h1>
+  <table id="results-table">
+    <thead>
+      <tr>
+        <th>Ship Name</th>
+        <th>Score</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-<h1>Cruise Finder Test</h1>
+  <script type="module">
+    // Conversion & sorting functions
+    function convertOldScores(ship) {
+      const baseline = 60;
+      let softPoints = 0;
 
-<div id="quiz"></div>
-<button onclick="calculateResults()">See Your Top Matches</button>
-<div class="results" id="results"></div>
+      const s = ship.scores;
 
-<script>
-// ======= QUESTIONS =======
-const questions = [
-  { text: "Who's setting sail?", key: ["Solo", "Couples", "Family", "Friends", "Older Adults"], multi: true },
-  { text: "What's your vibe?", key: ["Adventure", "Cultural", "Family Fun", "Relaxation", "Party", "Romantic"], multi: true },
-  { text: "What's your budget comfort zone?", key: ["Under 100", "100-250", "250-400", "400+"], multi: false },
-  { text: "Where are you dreaming of?", key: ["Caribbean", "Northern Europe", "Mediterranean", "South Pacific", "Asia", "Alaska", "Other"], multi: true },
-  { text: "What size ship appeals to you?", key: ["Under 500", "500-2000", "2000-4000", "4000+"], multi: false },
-  { text: "What matters most on board?", key: ["Fine Dining", "Spa & Wellness", "Pools & Water Fun", "Shows & Theater", "Kids Club"], multi: true }
-];
+      // Audience preference
+      const audienceKeys = ["Family","Couples","Solo","Friends","Older Adults"];
+      const audienceFraction = audienceKeys.reduce((sum, key) => sum + (s[key] || 0), 0) / audienceKeys.length;
+      softPoints += audienceFraction * 10; // max 10
 
-// ======= SHIPS =======
-const ships = [
-  { name:"Oceania Vista", scores: {"Solo":0,"Couples":1,"Family":0.5,"Friends":0.5,"Older Adults":1,"Adventure":0.5,"Cultural":1,"Family Fun":0.5,"Relaxation":1,"Party":0,"Romantic":1,"Luxury":1,"Modern":0.5,"Dining":1,"Size":0.5} },
-  { name:"Cunard Queen Anne", scores: {"Solo":0,"Couples":1,"Family":0.5,"Friends":0,"Older Adults":1,"Adventure":0,"Cultural":1,"Family Fun":0,"Relaxation":1,"Party":0,"Romantic":1,"Luxury":0.9,"Modern":0,"Dining":1,"Size":0.5} },
-  { name:"Nieuw Statendam", scores: {"Solo":0,"Couples":1,"Family":1,"Friends":0.5,"Older Adults":1,"Adventure":0.5,"Cultural":0.5,"Family Fun":0.5,"Relaxation":1,"Party":0.5,"Romantic":0.5,"Luxury":0.7,"Modern":0.5,"Dining":0.8,"Size":0.7} },
-  { name:"Celebrity Solstice", scores: {"Solo":0,"Couples":1,"Family":1,"Friends":0.5,"Older Adults":1,"Adventure":0.5,"Cultural":0.5,"Family Fun":0.5,"Relaxation":1,"Party":0.5,"Romantic":1,"Luxury":0.8,"Modern":0.8,"Dining":1,"Size":0.6} },
-  { name:"Enchanted Princess", scores: {"Solo":0,"Couples":1,"Family":1,"Friends":0.5,"Older Adults":1,"Adventure":0.5,"Cultural":0.5,"Family Fun":0.6,"Relaxation":0.7,"Party":0.5,"Romantic":0.7,"Luxury":0.7,"Modern":0.7,"Dining":0.8,"Size":0.7} },
-  { name:"Quantum of the Seas", scores: {"Solo":0,"Couples":0.8,"Family":0.7,"Friends":0.8,"Older Adults":0.5,"Adventure":0.8,"Cultural":0.6,"Family Fun":0.8,"Relaxation":0.6,"Party":0.8,"Romantic":0.6,"Luxury":0.7,"Modern":0.9,"Dining":0.7,"Size":0.8} },
-  { name:"MSC Meraviglia", scores: {"Solo":0,"Couples":0.8,"Family":0.9,"Friends":0.7,"Older Adults":0.5,"Adventure":0.7,"Cultural":0.6,"Family Fun":0.7,"Relaxation":0.6,"Party":0.7,"Romantic":0.6,"Luxury":0.6,"Modern":0.8,"Dining":0.7,"Size":0.8} },
-  { name:"Costa Smeralda", scores: {"Solo":0,"Couples":0.7,"Family":0.8,"Friends":0.6,"Older Adults":0.5,"Adventure":0.6,"Cultural":0.5,"Family Fun":0.6,"Relaxation":0.6,"Party":0.6,"Romantic":0.6,"Luxury":0.5,"Modern":0.7,"Dining":0.6,"Size":0.8} },
-  { name:"Carnival Sunshine", scores: {"Solo":0.5,"Couples":0.5,"Family":1,"Friends":1,"Older Adults":0.3,"Adventure":0.5,"Cultural":0.3,"Family Fun":1,"Relaxation":0.3,"Party":1,"Romantic":0.3,"Luxury":0.3,"Modern":0.8,"Dining":0.4,"Size":0.7} },
-  { name:"Viking Star", scores: {"Solo":0,"Couples":1,"Family":0.3,"Friends":0,"Older Adults":1,"Adventure":0.5,"Cultural":1,"Family Fun":0.3,"Relaxation":0.9,"Party":0,"Romantic":0.8,"Luxury":0.8,"Modern":0.7,"Dining":0.8,"Size":0.5} },
-  { name:"Norwegian Encore", scores: {"Solo":0,"Couples":0.7,"Family":0.8,"Friends":0.9,"Older Adults":0.5,"Adventure":0.7,"Cultural":0.5,"Family Fun":0.7,"Relaxation":0.5,"Party":0.9,"Romantic":0.6,"Luxury":0.5,"Modern":0.8,"Dining":0.6,"Size":0.8} }
-];
+      // Luxury / Market
+      softPoints += (s["Luxury"] || 0) * 6;
 
-// ======= GENERATE QUIZ =======
-const quizDiv = document.getElementById("quiz");
+      // Modern
+      softPoints += (s["Modern"] || 0) * 6;
 
-questions.forEach((q,i) => {
-  const div = document.createElement("div");
-  div.className = "question";
-  div.innerHTML = `<h3>${q.text}</h3>`;
-  q.key.forEach(opt => {
-    const id = `q${i}-${opt.replace(/\s+/g,"")}`;
-    div.innerHTML += `
-      <label>
-        <input type="${q.multi ? 'checkbox':'radio'}" name="q${i}" value="${opt}" id="${id}">
-        ${opt}
-      </label>`;
-  });
-  quizDiv.appendChild(div);
-});
+      // Dining
+      softPoints += (s["Dining"] || 0) * 6;
 
-// ======= CALCULATE RESULTS =======
-function calculateResults() {
-  const userAnswers = {};
-  questions.forEach((q,i) => {
-    const selected = [];
-    document.getElementsByName(`q${i}`).forEach(input => {
-      if(input.checked) selected.push(input.value);
-    });
-    userAnswers[i] = selected;
-  });
+      // Size
+      softPoints += (s["Size"] || 0) * 6;
 
-  const results = ships.map(ship => {
-    let total = 0;
-    questions.forEach((q,i) => {
-      userAnswers[i].forEach(ans => {
-        if(ship.scores[ans] !== undefined) total += ship.scores[ans];
-      });
-    });
-    return { name: ship.name, score: total };
-  });
+      // Extras
+      const extraKeys = ["Adventure","Cultural","Relaxation","Party","Romantic","Family Fun"];
+      const extraFraction = extraKeys.reduce((sum, key) => sum + (s[key] || 0), 0) / extraKeys.length;
+      softPoints += extraFraction * 6; // max 6
 
-  results.sort((a,b)=>b.score-a.score);
+      const finalScore = Math.min(baseline + softPoints, 100);
 
-  const resultsDiv = document.getElementById("results");
-  resultsDiv.innerHTML = "<h2>Top Cruise Matches:</h2>";
-  results.slice(0,5).forEach(r=>{
-    resultsDiv.innerHTML += `<div class="ship"><strong>${r.name}</strong> — Score: ${r.score.toFixed(2)}</div>`;
-  });
-}
-</script>
+      return { ...ship, finalScore };
+    }
 
+    function getSortedShips(oldShipsJson) {
+      return oldShipsJson
+        .map(convertOldScores)
+        .sort((a, b) => b.finalScore - a.finalScore);
+    }
+
+    // Load ships.json and display results
+    fetch("ships.json")
+      .then(res => res.json())
+      .then(data => {
+        const results = getSortedShips(data);
+        const tbody = document.querySelector("#results-table tbody");
+        tbody.innerHTML = "";
+
+        results.forEach(ship => {
+          const tr = document.createElement("tr");
+          const nameTd = document.createElement("td");
+          const scoreTd = document.createElement("td");
+
+          nameTd.textContent = ship.name;
+          scoreTd.textContent = ship.finalScore.toFixed(0); // show as whole number
+
+          tr.appendChild(nameTd);
+          tr.appendChild(scoreTd);
+          tbody.appendChild(tr);
+        });
+      })
+      .catch(err => console.error("Error loading ships.json:", err));
+  </script>
 </body>
 </html>
