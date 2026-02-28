@@ -10,12 +10,10 @@ body {
   color: #333;
   padding: 20px;
 }
-
 h1 {
   text-align: center;
   margin-bottom: 30px;
 }
-
 .form-row {
   display: flex;
   flex-wrap: wrap;
@@ -23,20 +21,17 @@ h1 {
   justify-content: center;
   margin-bottom: 15px;
 }
-
 label {
   display: flex;
   flex-direction: column;
   font-weight: bold;
 }
-
 select {
   padding: 5px;
   margin-top: 5px;
   border-radius: 5px;
   border: 1px solid #aaa;
 }
-
 button {
   padding: 10px 20px;
   border-radius: 5px;
@@ -46,11 +41,9 @@ button {
   font-weight: bold;
   cursor: pointer;
 }
-
 button:hover {
   background-color: #005fa3;
 }
-
 table {
   width: 100%;
   margin-top: 20px;
@@ -60,27 +53,24 @@ table {
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
-
 th, td {
   padding: 12px;
   text-align: left;
 }
-
 th {
   background-color: #0077cc;
   color: white;
 }
-
 tr:nth-child(even) {
   background-color: #f2f2f2;
 }
-
 tr:hover {
   background-color: #e0f0ff;
 }
 </style>
 </head>
 <body>
+
 <h1>Cruise Finder</h1>
 
 <div class="form-row">
@@ -108,7 +98,7 @@ tr:hover {
     </select>
   </label>
 
-  <label style="align-self: flex-end;">
+  <label style="align-self:flex-end;">
     <button id="findShips">Find Ships</button>
   </label>
 </div>
@@ -121,54 +111,40 @@ tr:hover {
 </table>
 
 <script>
-// --- Ships data ---
+// --- Expanded ships dataset (~15 ships) ---
 const data = [
-  {
-    "name": "Carnival Sunshine",
-    "scores": {"Family":1,"Couples":0.3,"Solo":0.2,"Older Adults":0.4,"Luxury":0.2,"Modern":1,"Dining":1,"Size":1,"Adventure":0.5,"Cultural":0.4,"Family Fun":1,"Relaxation":0.6,"Party":0.7,"Romantic":0.3},
-    "deployment":["Caribbean","Bahamas"]
-  },
-  {
-    "name": "MSC Meraviglia",
-    "scores": {"Family":0.8,"Couples":0.5,"Solo":0.3,"Older Adults":0.4,"Luxury":0.5,"Modern":1,"Dining":1,"Size":1,"Adventure":0.6,"Cultural":0.5,"Family Fun":0.8,"Relaxation":0.7,"Party":0.5,"Romantic":0.4},
-    "deployment":["Caribbean","Europe"]
-  },
-  {
-    "name": "Cunard Queen Anne",
-    "scores": {"Family":0.5,"Couples":1,"Solo":0,"Older Adults":1,"Luxury":0.9,"Modern":0,"Dining":1,"Size":0.5,"Adventure":0,"Cultural":1,"Family Fun":0,"Relaxation":1,"Party":0,"Romantic":1},
-    "deployment":["Mediterranean","Europe"]
-  },
-  {
-    "name": "Royal Caribbean Odyssey",
-    "scores": {"Family":0.9,"Couples":0.6,"Solo":0.5,"Older Adults":0.3,"Luxury":0.4,"Modern":1,"Dining":1,"Size":1,"Adventure":0.8,"Cultural":0.4,"Family Fun":0.9,"Relaxation":0.6,"Party":0.8,"Romantic":0.5},
-    "deployment":["Caribbean","Europe"]
-  },
-  {
-    "name": "Celebrity Constellation",
-    "scores": {"Family":0.5,"Couples":0.8,"Solo":0.6,"Older Adults":0.7,"Luxury":0.7,"Modern":1,"Dining":1,"Size":0.5,"Adventure":0.6,"Cultural":0.8,"Family Fun":0.5,"Relaxation":0.9,"Party":0.4,"Romantic":0.8},
-    "deployment":["Caribbean","Mediterranean"]
-  }
+  {name:"Carnival Sunshine", scores:{Family:1,Luxury:0.2,Modern:1,Dining:1,Size:1}, deployment:["Caribbean","Bahamas"]},
+  {name:"MSC Meraviglia", scores:{Family:0.8,Luxury:0.5,Modern:1,Dining:1,Size:1}, deployment:["Caribbean","Europe"]},
+  {name:"Cunard Queen Anne", scores:{Family:0.5,Luxury:0.9,Modern:0,Dining:1,Size:0.5}, deployment:["Mediterranean","Europe"]},
+  {name:"Royal Caribbean Odyssey", scores:{Family:0.9,Luxury:0.4,Modern:1,Dining:1,Size:1}, deployment:["Caribbean","Europe"]},
+  {name:"Celebrity Constellation", scores:{Family:0.5,Luxury:0.7,Modern:1,Dining:1,Size:0.5}, deployment:["Caribbean","Mediterranean"]},
+  {name:"Disney Dream", scores:{Family:1,Luxury:0.6,Modern:1,Dining:1,Size:0.7}, deployment:["Caribbean"]},
+  {name:"Norwegian Epic", scores:{Family:0.8,Luxury:0.5,Modern:1,Dining:1,Size:1}, deployment:["Europe","Mediterranean"]},
+  {name:"Princess Royal", scores:{Family:0.6,Luxury:0.9,Modern:0.7,Dining:1,Size:0.6}, deployment:["Europe"]},
+  {name:"MSC Seaside", scores:{Family:0.9,Luxury:0.4,Modern:1,Dining:1,Size:0.8}, deployment:["Caribbean"]},
+  {name:"Royal Caribbean Freedom", scores:{Family:0.85,Luxury:0.5,Modern:1,Dining:1,Size:1}, deployment:["Caribbean","Mediterranean"]},
+  {name:"Holland America Nieuw", scores:{Family:0.6,Luxury:0.7,Modern:0.8,Dining:1,Size:0.6}, deployment:["Europe"]},
+  {name:"P&O Britannia", scores:{Family:0.7,Luxury:0.6,Modern:0.9,Dining:1,Size:0.7}, deployment:["Mediterranean","Europe"]},
+  {name:"Celebrity Edge", scores:{Family:0.6,Luxury:0.8,Modern:1,Dining:1,Size:0.7}, deployment:["Caribbean","Mediterranean"]},
+  {name:"MSC Fantasia", scores:{Family:0.8,Luxury:0.5,Modern:1,Dining:1,Size:1}, deployment:["Europe","Mediterranean"]},
+  {name:"Disney Fantasy", scores:{Family:1,Luxury:0.6,Modern:1,Dining:1,Size:0.8}, deployment:["Caribbean"]}
 ];
 
-// --- Convert scores to 60–100 ---
+// --- Convert scores to 60-100 ---
 function convertOldScores(ship){
   const baseline = 60;
   const s = ship.scores;
-  const audience = ["Family","Couples","Solo","Friends","Older Adults"];
-  let soft = audience.reduce((sum,key)=>sum+(s[key]||0),0)/audience.length*10;
-  soft += (s["Luxury"]||0)*6 + (s["Modern"]||0)*6 + (s["Dining"]||0)*6 + (s["Size"]||0)*6;
-  const extra = ["Adventure","Cultural","Relaxation","Party","Romantic","Family Fun"];
-  soft += extra.reduce((sum,key)=>sum+(s[key]||0),0)/extra.length*6;
+  const soft = Object.values(s).reduce((sum,v)=>sum+v,0)/Object.keys(s).length*40;
   return {...ship, finalScore: Math.min(baseline+soft,100)};
 }
 
-// --- Hard filter based on quiz ---
+// --- Hard exclude ---
 function hardExclude(ship,user){
   if(user.audience==="Family" && (ship.scores.Family||0)<0.3) return true;
-  if(user.audience==="Adult" && (ship.scores.Couples||0)<0.3 && (ship.scores["Older Adults"]||0)<0.3) return true;
+  if(user.audience==="Adult" && ((ship.scores.Couples||0)<0.3 && (ship.scores["Older Adults"]||0)<0.3)) return true;
   if(user.audience==="Solo" && (ship.scores.Solo||0)<0.3) return true;
 
-  if(user.budget==="low" && (ship.scores.Luxury||0)>0.8) return true;
+  if(user.budget==="low" && (ship.scores.Luxury||0)>0.9) return true;
   if(user.budget==="mid" && (ship.scores.Luxury||0)>0.95) return true;
 
   if(!ship.deployment.includes(user.region)) return true;
