@@ -2,33 +2,116 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Test Cruise Finder</title>
+<title>Cruise Finder</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+  color: #333;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  font-weight: bold;
+}
+
+select {
+  padding: 5px;
+  margin-top: 5px;
+  border-radius: 5px;
+  border: 1px solid #aaa;
+}
+
+button {
+  padding: 10px 20px;
+  border-radius: 5px;
+  border: none;
+  background-color: #0077cc;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #005fa3;
+}
+
+table {
+  width: 100%;
+  margin-top: 20px;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+th, td {
+  padding: 12px;
+  text-align: left;
+}
+
+th {
+  background-color: #0077cc;
+  color: white;
+}
+
+tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+tr:hover {
+  background-color: #e0f0ff;
+}
+</style>
 </head>
 <body>
-<h1>Test Cruise Finder</h1>
+<h1>Cruise Finder</h1>
 
-<label>Audience:
-  <select id="audience">
-    <option value="Family">Family</option>
-    <option value="Adult">Adult</option>
-  </select>
-</label>
+<div class="form-row">
+  <label>Audience
+    <select id="audience">
+      <option value="Family">Family</option>
+      <option value="Adult">Adult</option>
+      <option value="Solo">Solo</option>
+    </select>
+  </label>
 
-<label>Budget:
-  <select id="budget">
-    <option value="low">Low</option>
-    <option value="mid">Mid</option>
-  </select>
-</label>
+  <label>Budget
+    <select id="budget">
+      <option value="low">Low</option>
+      <option value="mid">Mid</option>
+      <option value="high">High</option>
+    </select>
+  </label>
 
-<label>Region:
-  <select id="region">
-    <option value="Caribbean">Caribbean</option>
-    <option value="Mediterranean">Mediterranean</option>
-  </select>
-</label>
+  <label>Region
+    <select id="region">
+      <option value="Caribbean">Caribbean</option>
+      <option value="Mediterranean">Mediterranean</option>
+      <option value="Europe">Europe</option>
+    </select>
+  </label>
 
-<button id="findShips">Find Ships</button>
+  <label style="align-self: flex-end;">
+    <button id="findShips">Find Ships</button>
+  </label>
+</div>
 
 <table id="results-table">
   <thead>
@@ -38,33 +121,89 @@
 </table>
 
 <script>
-console.log("Script loaded"); // <-- confirms script is running
-
+// --- Ships data ---
 const data = [
-  {name:"Carnival Sunshine", scores:{Family:1, Luxury:0.2}, deployment:["Caribbean"]},
-  {name:"MSC Meraviglia", scores:{Family:0.8, Luxury:0.5}, deployment:["Caribbean","Mediterranean"]}
+  {
+    "name": "Carnival Sunshine",
+    "scores": {"Family":1,"Couples":0.3,"Solo":0.2,"Older Adults":0.4,"Luxury":0.2,"Modern":1,"Dining":1,"Size":1,"Adventure":0.5,"Cultural":0.4,"Family Fun":1,"Relaxation":0.6,"Party":0.7,"Romantic":0.3},
+    "deployment":["Caribbean","Bahamas"]
+  },
+  {
+    "name": "MSC Meraviglia",
+    "scores": {"Family":0.8,"Couples":0.5,"Solo":0.3,"Older Adults":0.4,"Luxury":0.5,"Modern":1,"Dining":1,"Size":1,"Adventure":0.6,"Cultural":0.5,"Family Fun":0.8,"Relaxation":0.7,"Party":0.5,"Romantic":0.4},
+    "deployment":["Caribbean","Europe"]
+  },
+  {
+    "name": "Cunard Queen Anne",
+    "scores": {"Family":0.5,"Couples":1,"Solo":0,"Older Adults":1,"Luxury":0.9,"Modern":0,"Dining":1,"Size":0.5,"Adventure":0,"Cultural":1,"Family Fun":0,"Relaxation":1,"Party":0,"Romantic":1},
+    "deployment":["Mediterranean","Europe"]
+  },
+  {
+    "name": "Royal Caribbean Odyssey",
+    "scores": {"Family":0.9,"Couples":0.6,"Solo":0.5,"Older Adults":0.3,"Luxury":0.4,"Modern":1,"Dining":1,"Size":1,"Adventure":0.8,"Cultural":0.4,"Family Fun":0.9,"Relaxation":0.6,"Party":0.8,"Romantic":0.5},
+    "deployment":["Caribbean","Europe"]
+  },
+  {
+    "name": "Celebrity Constellation",
+    "scores": {"Family":0.5,"Couples":0.8,"Solo":0.6,"Older Adults":0.7,"Luxury":0.7,"Modern":1,"Dining":1,"Size":0.5,"Adventure":0.6,"Cultural":0.8,"Family Fun":0.5,"Relaxation":0.9,"Party":0.4,"Romantic":0.8},
+    "deployment":["Caribbean","Mediterranean"]
+  }
 ];
 
-function findShips(data,user){
-  const results = data.filter(ship=>ship.deployment.includes(user.region));
+// --- Convert scores to 60–100 ---
+function convertOldScores(ship){
+  const baseline = 60;
+  const s = ship.scores;
+  const audience = ["Family","Couples","Solo","Friends","Older Adults"];
+  let soft = audience.reduce((sum,key)=>sum+(s[key]||0),0)/audience.length*10;
+  soft += (s["Luxury"]||0)*6 + (s["Modern"]||0)*6 + (s["Dining"]||0)*6 + (s["Size"]||0)*6;
+  const extra = ["Adventure","Cultural","Relaxation","Party","Romantic","Family Fun"];
+  soft += extra.reduce((sum,key)=>sum+(s[key]||0),0)/extra.length*6;
+  return {...ship, finalScore: Math.min(baseline+soft,100)};
+}
+
+// --- Hard filter based on quiz ---
+function hardExclude(ship,user){
+  if(user.audience==="Family" && (ship.scores.Family||0)<0.3) return true;
+  if(user.audience==="Adult" && (ship.scores.Couples||0)<0.3 && (ship.scores["Older Adults"]||0)<0.3) return true;
+  if(user.audience==="Solo" && (ship.scores.Solo||0)<0.3) return true;
+
+  if(user.budget==="low" && (ship.scores.Luxury||0)>0.8) return true;
+  if(user.budget==="mid" && (ship.scores.Luxury||0)>0.95) return true;
+
+  if(!ship.deployment.includes(user.region)) return true;
+
+  return false;
+}
+
+// --- Display results ---
+function displayResults(ships){
   const tbody = document.querySelector("#results-table tbody");
   tbody.innerHTML="";
-  results.forEach(ship=>{
-    const tr = document.createElement("tr");
-    tr.innerHTML=`<td>${ship.name}</td><td>${Math.floor(ship.scores.Family*100)}</td>`;
+  if(ships.length===0){
+    tbody.innerHTML="<tr><td colspan='2'>No ships match your criteria.</td></tr>";
+    return;
+  }
+  ships.forEach(ship=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${ship.name}</td><td>${ship.finalScore.toFixed(0)}</td>`;
     tbody.appendChild(tr);
   });
 }
 
+// --- Button listener ---
 document.getElementById("findShips").addEventListener("click",()=>{
-  console.log("Button clicked!");
   const user = {
     audience: document.getElementById("audience").value,
     budget: document.getElementById("budget").value,
     region: document.getElementById("region").value
   };
-  console.log("User selection:", user);
-  findShips(data,user);
+  const results = data
+    .filter(ship=>!hardExclude(ship,user))
+    .map(convertOldScores)
+    .sort((a,b)=>b.finalScore-a.finalScore);
+
+  displayResults(results);
 });
 </script>
 </body>
