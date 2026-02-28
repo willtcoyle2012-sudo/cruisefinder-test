@@ -1,44 +1,23 @@
-// js/scoreConverter.js
-
-export function convertOldScores(ship) {
+function convertOldScores(ship, user){
   const baseline = 60;
-  let softPoints = 0;
+  let score = baseline;
 
-  const s = ship.scores;
+  // Audience match
+  if(user.audience==="Family") score += (ship.scores.Family||0)*20;
+  if(user.audience==="Adult") score += ((ship.scores.Couples||0 + ship.scores["Older Adults"]||0)/2)*20;
+  if(user.audience==="Solo") score += (ship.scores.Solo||0)*20;
 
-  // Audience preference
-  const audienceKeys = ["Family","Couples","Solo","Friends","Older Adults"];
-  const audienceFraction = audienceKeys.reduce((sum, key) => sum + (s[key] || 0), 0) / audienceKeys.length;
-  softPoints += audienceFraction * 10; // max 10
+  // Budget match (higher for closer Luxury preference)
+  if(user.budget==="low") score += (1 - (ship.scores.Luxury||0))*10;
+  if(user.budget==="mid") score += 10; // neutral
+  if(user.budget==="high") score += (ship.scores.Luxury||0)*10;
 
-  // Luxury / Market
-  softPoints += (s["Luxury"] || 0) * 6;
+  // Region match
+  if(ship.deployment.includes(user.region)) score += 10;
 
-  // Modern
-  softPoints += (s["Modern"] || 0) * 6;
+  // Extra attributes
+  const extra = ["Adventure","Cultural","Relaxation","Party","Romantic","Family Fun"];
+  score += extra.reduce((sum,key)=>sum + (ship.scores[key]||0)*3,0);
 
-  // Dining
-  softPoints += (s["Dining"] || 0) * 6;
-
-  // Size
-  softPoints += (s["Size"] || 0) * 6;
-
-  // Extras
-  const extraKeys = ["Adventure","Cultural","Relaxation","Party","Romantic","Family Fun"];
-  const extraFraction = extraKeys.reduce((sum, key) => sum + (s[key] || 0), 0) / extraKeys.length;
-  softPoints += extraFraction * 6; // max 6
-
-  // Final score
-  const finalScore = Math.min(baseline + softPoints, 100);
-
-  return {
-    ...ship,
-    finalScore
-  };
-}
-
-export function getSortedShips(oldShipsJson) {
-  return oldShipsJson
-    .map(convertOldScores)
-    .sort((a,b) => b.finalScore - a.finalScore);
+  return {...ship, finalScore: Math.min(score, 100)};
 }
